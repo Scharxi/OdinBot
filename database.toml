@@ -1,6 +1,6 @@
 [database]
 username="god"
 password=""
-database_name="odin"
+databaseName="odin"
 host="localhost"
 port=3306
