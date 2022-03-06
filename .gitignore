@@ -31,5 +31,6 @@ fabric.properties
 !src/**/build/
 gradle-app.setting
 !gradle-wrapper.jar
+.idea/
 .gradletasknamecache
 .env
