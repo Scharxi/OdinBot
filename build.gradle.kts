@@ -42,14 +42,15 @@ dependencies {
     implementation(libs.ktoml)
     implementation(libs.ktomlf)
 
+    // Database
+    implementation("mysql:mysql-connector-java:8.0.28")
+    implementation(libs.hikari)
 
     // Exposed
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.jdbc)
 
-    // Hikari
-    implementation(libs.hikari)
 }
 
 application {

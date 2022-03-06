@@ -3,6 +3,7 @@ package me.scharxidev.odin
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.utils.env
 import dev.kord.common.entity.PresenceStatus
+import me.scharxidev.odin.database.DatabaseManager
 
 private val BOT_TOKEN = env("TOKEN")
 
@@ -11,6 +12,11 @@ suspend fun main() {
         presence {
             status = PresenceStatus.Online
             playing("Odin is with you!")
+        }
+        hooks {
+            afterKoinSetup {
+                DatabaseManager.startDatabase()
+            }
         }
     }.start()
 }
