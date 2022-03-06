@@ -38,7 +38,10 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.logging)
 
-    implementation(libs.toml)
+    // TOML
+    implementation(libs.ktoml)
+    implementation(libs.ktomlf)
+
 
     // Exposed
     implementation(libs.exposed.core)
