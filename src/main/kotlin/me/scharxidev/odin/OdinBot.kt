@@ -6,6 +6,7 @@ import dev.kord.common.entity.PresenceStatus
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
 import me.scharxidev.odin.database.DatabaseManager
+import me.scharxidev.odin.extensions.Config
 import me.scharxidev.odin.extensions.Moderation
 
 private val BOT_TOKEN = env("TOKEN")
@@ -19,6 +20,7 @@ suspend fun main() {
             enabled = true
         }
         extensions {
+            add(::Config)
             add(::Moderation)
         }
         presence {

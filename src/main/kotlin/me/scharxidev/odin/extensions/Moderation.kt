@@ -44,13 +44,11 @@ class Moderation : Extension() {
                 textChannel.bulkDelete(messageHolder, "Clear Command")
 
                 respond {
-                    content="Messages cleared :broom:"
+                    content = "Messages cleared :broom:"
                 }
-
                 //TODO: Send embed in action log
             }
         }
-
     }
 
     inner class ClearArgs : Arguments() {

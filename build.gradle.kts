@@ -51,6 +51,10 @@ dependencies {
     implementation(libs.exposed.dao)
     implementation(libs.exposed.jdbc)
 
+    // Arrow
+    implementation("io.arrow-kt:arrow-core:1.0.2-SNAPSHOT")
+    implementation("io.arrow-kt:arrow-fx-coroutines:1.0.2-SNAPSHOT")
+    implementation("io.arrow-kt:arrow-fx-stm:1.0.2-SNAPSHOT")
 }
 
 application {
