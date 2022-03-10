@@ -6,6 +6,7 @@ import dev.kord.common.entity.PresenceStatus
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
 import me.scharxidev.odin.database.DatabaseManager
+import me.scharxidev.odin.events.GhostPingDetector
 import me.scharxidev.odin.extensions.Config
 import me.scharxidev.odin.extensions.Moderation
 
@@ -22,6 +23,7 @@ suspend fun main() {
         extensions {
             add(::Config)
             add(::Moderation)
+            add(::GhostPingDetector)
         }
         presence {
             status = PresenceStatus.Online
@@ -29,6 +31,8 @@ suspend fun main() {
         }
         intents {
             +Intent.GuildMembers
+            +Intent.GuildMessages
+            +Intent.Guilds
         }
         hooks {
             afterKoinSetup {
