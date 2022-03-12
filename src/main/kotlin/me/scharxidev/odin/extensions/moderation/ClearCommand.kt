@@ -37,10 +37,12 @@ class ClearCommand : Moderation() {
                         logger.error("Error in the clear command")
                     }.toList()
 
+                val messages: Int = messagesToClear.size
+
                 textChannel.bulkDelete(messagesToClear, "Clear Command")
 
                 respond {
-                    content = "Messages cleared :broom:"
+                    content = "Cleared **$messages messages** :broom:"
                 }
             }
         }
