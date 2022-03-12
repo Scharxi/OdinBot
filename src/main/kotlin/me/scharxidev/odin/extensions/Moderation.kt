@@ -9,14 +9,11 @@ import com.kotlindiscord.kord.extensions.commands.application.slash.ephemeralSub
 import com.kotlindiscord.kord.extensions.commands.converters.impl.*
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
-import com.kotlindiscord.kord.extensions.extensions.slashCommandCheck
-import com.kotlindiscord.kord.extensions.extensions.userCommandCheck
 import com.kotlindiscord.kord.extensions.time.TimestampType
 import com.kotlindiscord.kord.extensions.time.toDiscord
 import com.kotlindiscord.kord.extensions.types.respond
 import com.kotlindiscord.kord.extensions.utils.removeTimeout
 import com.kotlindiscord.kord.extensions.utils.timeoutUntil
-import com.kotlindiscord.kord.extensions.utils.unMute
 import dev.kord.common.entity.Permission
 import dev.kord.common.entity.Snowflake
 import dev.kord.common.entity.optional.getOrThrow
@@ -27,7 +24,10 @@ import dev.kord.core.behavior.channel.edit
 import dev.kord.core.behavior.edit
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.supplier.EntitySupplyStrategy
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimePeriod
 import kotlinx.datetime.TimeZone
@@ -36,44 +36,14 @@ import me.scharxidev.odin.database.DatabaseHelper
 import me.scharxidev.odin.database.DatabaseManager
 import me.scharxidev.odin.util.ResponseHelper
 import mu.KotlinLogging
-import java.lang.Integer.min
 
-class Moderation : Extension() {
+open class Moderation : Extension() {
     override val name: String = "moderation"
+
 
     @OptIn(DoNotChain::class, kotlin.time.ExperimentalTime::class)
     override suspend fun setup() {
-        val logger = KotlinLogging.logger {}
-
-        ephemeralSlashCommand(::ClearArgs) {
-            name = "clear"
-            description = "Clears messages"
-
-            check { hasPermission(Permission.ManageMessages) }
-
-            action {
-                val messageAmount = arguments.messages
-                val messageHolder = mutableListOf<Snowflake>()
-                val textChannel = channel as GuildMessageChannelBehavior
-
-                channel.getMessagesAround(channel.messages.last().id, min(messageAmount, 100))
-
-                channel.getMessagesBefore(channel.messages.last().id, min(messageAmount, 100))
-                    .filterNotNull()
-                    .onEach {
-                        messageHolder.add(it.fetchMessage().id)
-                    }.catch {
-                        it.printStackTrace()
-                        logger.error("Error in the clear command")
-                    }.collect()
-
-                textChannel.bulkDelete(messageHolder, "Clear Command")
-
-                respond {
-                    content = "Messages cleared :broom:"
-                }
-            }
-        }
+        val logger = KotlinLogging.logger { }
         ephemeralSlashCommand {
             name = "slowmo"
             description = "Change the rate limit of the user for all users"
@@ -540,7 +510,7 @@ class Moderation : Extension() {
             name = "unmute"
             description = "Unmutes an user"
 
-            check { hasPermission(Permission.ModerateMembers)}
+            check { hasPermission(Permission.ModerateMembers) }
 
             action {
                 val userArg = arguments.user

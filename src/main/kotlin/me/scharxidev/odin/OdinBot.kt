@@ -9,6 +9,7 @@ import me.scharxidev.odin.database.DatabaseManager
 import me.scharxidev.odin.events.GhostPingDetector
 import me.scharxidev.odin.extensions.Config
 import me.scharxidev.odin.extensions.Moderation
+import me.scharxidev.odin.extensions.moderation.ClearCommand
 
 private val BOT_TOKEN = env("TOKEN")
 private val TEST_GUILD = env("TEST_GUILD")
@@ -23,6 +24,7 @@ suspend fun main() {
         extensions {
             add(::Config)
             add(::Moderation)
+            add(::ClearCommand)
             add(::GhostPingDetector)
         }
         presence {
