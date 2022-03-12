@@ -5,6 +5,8 @@ import com.kotlindiscord.kord.extensions.checks.hasPermission
 import com.kotlindiscord.kord.extensions.commands.Arguments
 import com.kotlindiscord.kord.extensions.commands.application.slash.ephemeralSubCommand
 import com.kotlindiscord.kord.extensions.commands.converters.impl.int
+import com.kotlindiscord.kord.extensions.commands.converters.impl.optionalInt
+import com.kotlindiscord.kord.extensions.commands.converters.impl.user
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
@@ -12,16 +14,14 @@ import dev.kord.common.entity.Permission
 import dev.kord.common.entity.Snowflake
 import dev.kord.common.entity.optional.getOrThrow
 import dev.kord.core.behavior.channel.GuildMessageChannelBehavior
-import dev.kord.core.behavior.channel.TextChannelBehavior
 import dev.kord.core.behavior.channel.edit
 import dev.kord.core.entity.channel.TextChannel
+import dev.kord.core.supplier.EntitySupplyStrategy
 import kotlinx.coroutines.flow.*
-import kotlinx.datetime.Clock
 import me.scharxidev.odin.database.DatabaseHelper
 import me.scharxidev.odin.database.DatabaseManager
 import me.scharxidev.odin.util.ResponseHelper
 import mu.KotlinLogging
-import org.fusesource.jansi.Ansi
 import java.lang.Integer.min
 
 class Moderation : Extension() {
@@ -80,7 +80,8 @@ class Moderation : Extension() {
                     }
 
                     respond {
-                        content = "Changed the rate limit of the channel from $lastRateLimit seconds to $seconds seconds"
+                        content =
+                            "Changed the rate limit of the channel from $lastRateLimit seconds to $seconds seconds"
                     }
 
                     val actionLogId = DatabaseHelper.selectFromConfig(guild!!.id, DatabaseManager.Config.modActionLog)
@@ -142,6 +143,99 @@ class Moderation : Extension() {
                     )
                 }
             }
+        }
+
+        ephemeralSlashCommand {
+            name = "nuke"
+            description = "Nukes the channel"
+
+            check { hasPermission(Permission.ManageChannels) }
+
+            action {
+                val textChannel: GuildMessageChannelBehavior = channel as GuildMessageChannelBehavior
+
+                val messagesToDelete = channel.withStrategy(EntitySupplyStrategy.rest).getMessagesBefore(Snowflake.max, 100)
+                    .filterNotNull()
+                    .map { it.id }
+                    .toList()
+
+                try {
+                    textChannel.bulkDelete(messagesToDelete, "Channel Nuke")
+                } catch (e: Exception) {
+                    respond {
+                        content = "Could not nuke channel."
+                    }
+                }
+
+                respond {
+                    content = "Successfully nuked channel!"
+                }
+
+                val actionLogId = DatabaseHelper.selectFromConfig(guild!!.id, DatabaseManager.Config.modActionLog)
+
+                if (actionLogId.isEmpty()) {
+                    respond {
+                        content =
+                            "**Error:** Unable to access config for this guild. Make sure, that your config is set."
+                    }
+                    return@action
+                }
+
+                val actionLog = guild?.getChannel(Snowflake(actionLogId.orNull()!!)) as GuildMessageChannelBehavior
+                ResponseHelper.responseEmbedInChannel(
+                    actionLog,
+                    "Purge was successful",
+                    "Successfully purged ${textChannel.mention}",
+                    DISCORD_GREEN,
+                    user.asUser()
+                )
+            }
+        }
+
+        ephemeralSlashCommand(::PurgeArgs) {
+            name = "purge"
+            description = "Deletes the messages of an user"
+
+            check { hasPermission(Permission.ManageMessages) }
+
+            action {
+                val textChannel = channel as GuildMessageChannelBehavior
+                val user = arguments.user
+                val amount = arguments.messages
+
+                val messagesToDelete = channel.withStrategy(EntitySupplyStrategy.rest).getMessagesBefore(Snowflake.max, amount)
+                    .filterNotNull()
+                    .filter { it.author?.id == user.id }
+                    .map { it.id }
+                    .toList()
+
+                val messages = messagesToDelete.size
+
+                try {
+                    textChannel.bulkDelete(messagesToDelete, "Purge of user ${user.username}")
+                } catch (e: Exception) {
+                    respond {
+                        content = "Could not purge channel."
+                    }
+                }
+
+                respond {
+                    content = "Purged **${messages} messages** of **${user.username}**"
+                }
+            }
+        }
+
+
+    }
+
+    inner class PurgeArgs : Arguments() {
+        val user by user {
+            name = "user"
+            description = "The user whose messages you want to delete"
+        }
+        val messages by optionalInt {
+            name = "messages"
+            description = "The amount of messages you want to delete"
         }
     }
 
