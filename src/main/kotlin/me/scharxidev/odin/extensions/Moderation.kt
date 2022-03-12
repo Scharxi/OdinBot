@@ -9,10 +9,14 @@ import com.kotlindiscord.kord.extensions.commands.application.slash.ephemeralSub
 import com.kotlindiscord.kord.extensions.commands.converters.impl.*
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
+import com.kotlindiscord.kord.extensions.extensions.slashCommandCheck
+import com.kotlindiscord.kord.extensions.extensions.userCommandCheck
 import com.kotlindiscord.kord.extensions.time.TimestampType
 import com.kotlindiscord.kord.extensions.time.toDiscord
 import com.kotlindiscord.kord.extensions.types.respond
+import com.kotlindiscord.kord.extensions.utils.removeTimeout
 import com.kotlindiscord.kord.extensions.utils.timeoutUntil
+import com.kotlindiscord.kord.extensions.utils.unMute
 import dev.kord.common.entity.Permission
 import dev.kord.common.entity.Snowflake
 import dev.kord.common.entity.optional.getOrThrow
@@ -532,6 +536,57 @@ class Moderation : Extension() {
             }
         }
 
+        ephemeralSlashCommand(::UnmuteArgs) {
+            name = "unmute"
+            description = "Unmutes an user"
+
+            check { hasPermission(Permission.ModerateMembers)}
+
+            action {
+                val userArg = arguments.user
+
+                if (userArg.asMember(guild!!.id).timeoutUntil == null) {
+                    respond {
+                        content = "Could not unmute this user, because he is not muted"
+                    }
+                    return@action
+                }
+
+                val actionLogId = DatabaseHelper.selectFromConfig(guild!!.id, DatabaseManager.Config.modActionLog)
+                if (actionLogId.isEmpty()) {
+                    respond {
+                        content =
+                            "**Error:** Unable to access config for this guild! Is your configuration set?"
+                    }
+                    return@action
+                }
+
+                val actionLog = guild?.getChannel(Snowflake(actionLogId.orNull()!!)) as GuildMessageChannelBehavior
+
+                guild?.getMember(userArg.id)?.removeTimeout()
+
+                respond {
+                    content = "Unmuted ${userArg.tag}"
+                }
+
+                actionLog.createEmbed {
+                    title = "Remove Timeout"
+                    color = DISCORD_BLACK
+                    timestamp = Clock.System.now()
+
+                    field {
+                        name = "User:"
+                        value = "${userArg.tag} \n${userArg.id}"
+                        inline = false
+                    }
+                    footer {
+                        text = "Requested by ${user.asUser().tag}"
+                        icon = user.asUser().avatar?.url
+                    }
+                }
+            }
+        }
+
     }
 
     inner class PurgeArgs : Arguments() {
@@ -602,6 +657,13 @@ class Moderation : Extension() {
             name = "reason"
             description = "The reason for the temp mute"
             defaultValue = "No reason provided"
+        }
+    }
+
+    inner class UnmuteArgs : Arguments() {
+        val user by user {
+            name = "user"
+            description = "The user to unmute"
         }
     }
 }
