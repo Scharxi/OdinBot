@@ -9,9 +9,9 @@ import com.kotlindiscord.kord.extensions.commands.application.slash.ephemeralSub
 import com.kotlindiscord.kord.extensions.commands.converters.impl.*
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
-import com.kotlindiscord.kord.extensions.extensions.slashCommandCheck
+import com.kotlindiscord.kord.extensions.time.TimestampType
+import com.kotlindiscord.kord.extensions.time.toDiscord
 import com.kotlindiscord.kord.extensions.types.respond
-import com.kotlindiscord.kord.extensions.utils.mute
 import com.kotlindiscord.kord.extensions.utils.timeoutUntil
 import dev.kord.common.entity.Permission
 import dev.kord.common.entity.Snowflake
@@ -21,12 +21,13 @@ import dev.kord.core.behavior.channel.GuildMessageChannelBehavior
 import dev.kord.core.behavior.channel.createEmbed
 import dev.kord.core.behavior.channel.edit
 import dev.kord.core.behavior.edit
-import dev.kord.core.entity.User
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.supplier.EntitySupplyStrategy
-import io.sentry.Breadcrumb.user
 import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimePeriod
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
 import me.scharxidev.odin.database.DatabaseHelper
 import me.scharxidev.odin.database.DatabaseManager
 import me.scharxidev.odin.util.ResponseHelper
@@ -36,7 +37,7 @@ import java.lang.Integer.min
 class Moderation : Extension() {
     override val name: String = "moderation"
 
-    @OptIn(DoNotChain::class)
+    @OptIn(DoNotChain::class, kotlin.time.ExperimentalTime::class)
     override suspend fun setup() {
         val logger = KotlinLogging.logger {}
 
@@ -67,7 +68,6 @@ class Moderation : Extension() {
                 respond {
                     content = "Messages cleared :broom:"
                 }
-                //TODO: Send embed in action log
             }
         }
         ephemeralSlashCommand {
@@ -268,7 +268,8 @@ class Moderation : Extension() {
 
                 if (actionLogId.isEmpty() || moderators.isEmpty()) {
                     respond {
-                        content = "**Error:** Unable to access config for this guild. Make sure, that your config is set!"
+                        content =
+                            "**Error:** Unable to access config for this guild. Make sure, that your config is set!"
                     }
                     return@action
                 }
@@ -351,7 +352,7 @@ class Moderation : Extension() {
             name = "kick"
             description = "Kicks an user"
 
-            check { hasPermission(Permission.KickMembers)}
+            check { hasPermission(Permission.KickMembers) }
 
             action {
                 val reason = arguments.reason
@@ -426,6 +427,111 @@ class Moderation : Extension() {
             }
         }
 
+        ephemeralSlashCommand(::TempMuteArgs) {
+            name = "temp-mute"
+            description = "Mutes a user temporarily"
+
+            check { hasPermission(Permission.ModerateMembers) }
+
+            action {
+                val userArg = arguments.user
+                val reason = arguments.reason
+
+                val actionLogId = DatabaseHelper.selectFromConfig(guild!!.id, DatabaseManager.Config.modActionLog)
+                val moderators = DatabaseHelper.selectFromConfig(guild!!.id, DatabaseManager.Config.moderatorPing)
+                if (moderators.isEmpty() || actionLogId.isEmpty()) {
+                    respond {
+                        content =
+                            "**Error:** Unable to access config for this guild! Is your configuration set?"
+                    }
+                    return@action
+                }
+
+                val actionLog = guild?.getChannel(Snowflake(actionLogId.orNull()!!)) as GuildMessageChannelBehavior
+
+                val duration = Clock.System.now().plus(arguments.time, TimeZone.currentSystemDefault())
+
+                try {
+                    val roles = userArg.asMember(guild!!.id).roles.toList().map { it.id }
+
+                    if (guild?.getMember(userArg.id)?.isBot == true) {
+                        respond {
+                            content = "You cannot timeout a bot!"
+                        }
+                        return@action
+                    } else if (Snowflake(moderators.orNull()!!) in roles) {
+                        respond {
+                            content = "You cannot timeout a moderator!"
+                        }
+                        return@action
+                    }
+                } catch (e: Exception) {
+                    logger.warn("IsBot and Moderator checks failed on `Timeout` due to error")
+                }
+
+                try {
+                    guild?.getMember(userArg.id)?.edit {
+                        timeoutUntil = duration
+                    }
+                } catch (e: Exception) {
+                    respond {
+                        content = "Sorry, I can't timeout this person! Try doing timeout manually instead!"
+                    }
+                }
+
+                val dm = ResponseHelper.userDmEmbed(
+                    userArg,
+                    "You have been timed out in ${guild?.fetchGuild()?.name}",
+                    "**Duration:**\n${
+                        duration.toDiscord(TimestampType.Default) + "(" + arguments.time.toString()
+                            .replace("PT", "") + ")"
+                    }\n**Reason:**\n${reason}",
+                    null
+                )
+
+                respond {
+                    content = "Timed out ${userArg.username}"
+                }
+
+                actionLog.createEmbed {
+                    title = "Timeout"
+                    color = DISCORD_BLACK
+                    timestamp = Clock.System.now()
+
+                    field {
+                        name = "User:"
+                        value = "${userArg.tag} \n${userArg.id}"
+                        inline = false
+                    }
+                    field {
+                        name = "Duration:"
+                        value = duration.toDiscord(TimestampType.Default) + " (" + arguments.time.toString()
+                            .replace("PT", "") + ")"
+                        inline = false
+                    }
+                    field {
+                        name = "Reason:"
+                        value = arguments.reason
+                        inline = false
+                    }
+                    field {
+                        name = "User notification"
+                        value =
+                            if (dm != null) {
+                                "User notified with a direct message"
+                            } else {
+                                "Failed to notify user with a direct message "
+                            }
+                        inline = false
+                    }
+                    footer {
+                        text = "Requested by ${user.asUser().tag}"
+                        icon = user.asUser().avatar?.url
+                    }
+                }
+            }
+        }
+
     }
 
     inner class PurgeArgs : Arguments() {
@@ -470,7 +576,7 @@ class Moderation : Extension() {
         }
     }
 
-    inner class KickArgs : Arguments()  {
+    inner class KickArgs : Arguments() {
         val user by user {
             name = "user"
             description = "User to kick"
@@ -478,6 +584,23 @@ class Moderation : Extension() {
         val reason by defaultingString {
             name = "reason"
             description = "Reason for the kick"
+            defaultValue = "No reason provided"
+        }
+    }
+
+    inner class TempMuteArgs : Arguments() {
+        val user by user {
+            name = "user"
+            description = "The user you want to temp mute"
+        }
+        val time by coalescingDefaultingDuration {
+            name = "time"
+            description = "How long you want the user to be muted"
+            defaultValue = DateTimePeriod(hours = 1)
+        }
+        val reason by defaultingString {
+            name = "reason"
+            description = "The reason for the temp mute"
             defaultValue = "No reason provided"
         }
     }
