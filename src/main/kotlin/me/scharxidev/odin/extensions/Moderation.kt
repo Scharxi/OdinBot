@@ -9,6 +9,7 @@ import com.kotlindiscord.kord.extensions.commands.application.slash.ephemeralSub
 import com.kotlindiscord.kord.extensions.commands.converters.impl.*
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
+import com.kotlindiscord.kord.extensions.extensions.slashCommandCheck
 import com.kotlindiscord.kord.extensions.types.respond
 import com.kotlindiscord.kord.extensions.utils.mute
 import com.kotlindiscord.kord.extensions.utils.timeoutUntil
@@ -20,8 +21,10 @@ import dev.kord.core.behavior.channel.GuildMessageChannelBehavior
 import dev.kord.core.behavior.channel.createEmbed
 import dev.kord.core.behavior.channel.edit
 import dev.kord.core.behavior.edit
+import dev.kord.core.entity.User
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.supplier.EntitySupplyStrategy
+import io.sentry.Breadcrumb.user
 import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Clock
 import me.scharxidev.odin.database.DatabaseHelper
@@ -343,6 +346,86 @@ class Moderation : Extension() {
                 guild?.unban(userArg.id)
             }
         }
+
+        ephemeralSlashCommand(::KickArgs) {
+            name = "kick"
+            description = "Kicks an user"
+
+            check { hasPermission(Permission.KickMembers)}
+
+            action {
+                val reason = arguments.reason
+                val userArg = arguments.user
+
+                val actionLogId = DatabaseHelper.selectFromConfig(guild!!.id, DatabaseManager.Config.modActionLog)
+                val moderators = DatabaseHelper.selectFromConfig(guild!!.id, DatabaseManager.Config.moderatorPing)
+                if (moderators.isEmpty() || actionLogId.isEmpty()) {
+                    respond {
+                        content =
+                            "**Error:** Unable to access config for this guild! Is your configuration set?"
+                    }
+                    return@action
+                }
+
+                val actionLog = guild?.getChannel(Snowflake(actionLogId.orNull()!!)) as GuildMessageChannelBehavior
+
+                try {
+                    val roles = userArg.asMember(guild!!.id).roles.toList().map { it.id }
+
+                    if (guild?.getMember(userArg.id)?.isBot == true) {
+                        respond {
+                            content = "You cannot kick a bot user!"
+                        }
+                        return@action
+                    } else if (Snowflake(moderators.orNull()!!) in roles) {
+                        respond {
+                            content = "You cannot kick a moderator"
+                        }
+                    }
+                } catch (e: Exception) {
+                    logger.warn("IsBot and Moderator checks skipped on `Kick` due to error")
+                }
+
+                val dm = ResponseHelper.userDmEmbed(
+                    userArg,
+                    "You have been kicked from ${guild?.fetchGuild()?.name}",
+                    "**Reason:**\n${arguments.reason}",
+                    null
+                )
+
+                guild?.kick(userArg.id, reason)
+
+                respond {
+                    content = "Kicked ${userArg.username}"
+                }
+
+                actionLog.createEmbed {
+                    color = DISCORD_BLACK
+                    title = "Kicked User"
+                    description = "Kicked ${userArg.mention} from the server\n${userArg.id} (${userArg.tag})"
+                    field {
+                        name = "Reason:"
+                        value = reason
+                        inline = false
+                    }
+                    field {
+                        name = "User Notification:"
+                        value =
+                            if (dm != null) {
+                                "User notified with a direct message"
+                            } else {
+                                "Failed to notify user with direct message"
+                            }
+                        inline = false
+                    }
+                    footer {
+                        text = "Requested by ${user.asUser().tag}"
+                        icon = user.asUser().avatar?.url
+                    }
+                }
+            }
+        }
+
     }
 
     inner class PurgeArgs : Arguments() {
@@ -383,6 +466,18 @@ class Moderation : Extension() {
         val reason by defaultingString {
             name = "reason"
             description = "Reason for the soft ban"
+            defaultValue = "No reason provided"
+        }
+    }
+
+    inner class KickArgs : Arguments()  {
+        val user by user {
+            name = "user"
+            description = "User to kick"
+        }
+        val reason by defaultingString {
+            name = "reason"
+            description = "Reason for the kick"
             defaultValue = "No reason provided"
         }
     }
