@@ -154,10 +154,11 @@ class Moderation : Extension() {
             action {
                 val textChannel: GuildMessageChannelBehavior = channel as GuildMessageChannelBehavior
 
-                val messagesToDelete = channel.withStrategy(EntitySupplyStrategy.rest).getMessagesBefore(Snowflake.max, 100)
-                    .filterNotNull()
-                    .map { it.id }
-                    .toList()
+                val messagesToDelete =
+                    channel.withStrategy(EntitySupplyStrategy.rest).getMessagesBefore(Snowflake.max, 100)
+                        .filterNotNull()
+                        .map { it.id }
+                        .toList()
 
                 try {
                     textChannel.bulkDelete(messagesToDelete, "Channel Nuke")
@@ -203,11 +204,12 @@ class Moderation : Extension() {
                 val user = arguments.user
                 val amount = arguments.messages
 
-                val messagesToDelete = channel.withStrategy(EntitySupplyStrategy.rest).getMessagesBefore(Snowflake.max, amount)
-                    .filterNotNull()
-                    .filter { it.author?.id == user.id }
-                    .map { it.id }
-                    .toList()
+                val messagesToDelete =
+                    channel.withStrategy(EntitySupplyStrategy.rest).getMessagesBefore(Snowflake.max, amount)
+                        .filterNotNull()
+                        .filter { it.author?.id == user.id }
+                        .map { it.id }
+                        .toList()
 
                 val messages = messagesToDelete.size
 
@@ -222,6 +224,25 @@ class Moderation : Extension() {
                 respond {
                     content = "Purged **${messages} messages** of **${user.username}**"
                 }
+
+                val actionLogId = DatabaseHelper.selectFromConfig(guild!!.id, DatabaseManager.Config.modActionLog)
+
+                if (actionLogId.isEmpty()) {
+                    respond {
+                        content =
+                            "**Error:** Unable to access config for this guild. Make sure, that your config is set."
+                    }
+                    return@action
+                }
+
+                val actionLog = guild?.getChannel(Snowflake(actionLogId.orNull()!!)) as GuildMessageChannelBehavior
+                ResponseHelper.responseEmbedInChannel(
+                    actionLog,
+                    "Purge was successful",
+                    "Successfully purged **$messages** of **${user.username}** in ${channel.asChannel().mention}",
+                    DISCORD_GREEN,
+                    user.asUser()
+                )
             }
         }
 
