@@ -1,6 +1,8 @@
 package me.scharxidev.odin.extensions.moderation
 
 import com.kotlindiscord.kord.extensions.checks.hasPermission
+import com.kotlindiscord.kord.extensions.commands.Arguments
+import com.kotlindiscord.kord.extensions.commands.converters.impl.int
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
 import dev.kord.common.entity.Permission
@@ -45,6 +47,13 @@ class ClearCommand : Moderation() {
                     content = "Cleared **$messages messages** :broom:"
                 }
             }
+        }
+    }
+
+    inner class ClearArgs : Arguments() {
+        val messages by int {
+            name = "messages"
+            description = "Number of messages to delete"
         }
     }
 }

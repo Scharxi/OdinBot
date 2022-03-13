@@ -113,12 +113,6 @@ open class Moderation : Extension() {
             }
         }
     }
-    inner class ClearArgs : Arguments() {
-        val messages by int {
-            name = "messages"
-            description = "Number of messages to delete"
-        }
-    }
 
     inner class KickArgs : Arguments() {
         val user by user {
