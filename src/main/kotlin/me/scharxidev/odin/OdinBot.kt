@@ -11,6 +11,7 @@ import me.scharxidev.odin.extensions.Config
 import me.scharxidev.odin.extensions.Moderation
 import me.scharxidev.odin.extensions.moderation.ClearCommand
 import me.scharxidev.odin.extensions.moderation.MutingCommand
+import me.scharxidev.odin.extensions.moderation.NukeCommand
 import me.scharxidev.odin.extensions.moderation.SlowModeCommand
 
 private val BOT_TOKEN = env("TOKEN")
@@ -29,6 +30,7 @@ suspend fun main() {
             add(::ClearCommand)
             add(::MutingCommand)
             add(::SlowModeCommand)
+            add(::NukeCommand)
             add(::GhostPingDetector)
         }
         presence {
