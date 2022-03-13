@@ -8,14 +8,18 @@ import com.kotlindiscord.kord.extensions.commands.converters.impl.optionalChanne
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
+import dev.kord.common.entity.ChannelType
 import dev.kord.common.entity.Permission
 import dev.kord.common.entity.Permissions
+import dev.kord.common.exception.RequestException
 import dev.kord.core.behavior.channel.asChannelOf
 import dev.kord.core.behavior.channel.createEmbed
 import dev.kord.core.behavior.channel.edit
+import dev.kord.core.entity.channel.Category
 import dev.kord.core.entity.channel.TextChannel
-import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.rest.builder.channel.addRoleOverwrite
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.toList
 
 class LockingCommand : Extension() {
     override val name: String
@@ -106,6 +110,77 @@ class LockingCommand : Extension() {
                 // TODO: 13.03.2022 Send Action Log
             }
         }
+
+        ephemeralSlashCommand(::CategoryLockArgs) {
+            name = "lock-cat"
+            description = "The category whose channels are to be locked"
+
+            check { hasPermission(Permission.ManageChannels) }
+
+            action {
+                val category =
+                    arguments.category?.asChannelOf() ?: channel.asChannelOf<TextChannel>().category!!.asChannel()
+                val channels = category.channels.filter { it.type == ChannelType.GuildText }.toList()
+
+
+                try {
+                    channels.forEach {
+                        it.asChannelOf<TextChannel>().edit {
+                            name = it.name + "-🔒"
+                            addRoleOverwrite(guild!!.id) {
+                                denied = Permissions(Permission.SendMessages, Permission.AddReactions)
+                            }
+                        }
+                        // TODO: 13.03.2022 Notify channel
+                    }
+                } catch(e: RequestException) {
+                    respond {
+                        content = "Something went wrong in lock-cat command"
+                    }
+                }
+
+                respond {
+                    content = "Locked **${channels.size} channels** in `${category.name.uppercase()} category`"
+                }
+
+                // TODO: 13.03.2022 Log action 
+            }
+        }
+
+        ephemeralSlashCommand(::CategoryUnlockArgs) {
+            name = "unlock-cat"
+            description = "The category whose channels are to be unlocked"
+            
+            check{ hasPermission(Permission.ManageChannels)}
+            
+            action { 
+                val category: Category = 
+                    arguments.category?.asChannelOf() ?: channel.asChannelOf<TextChannel>().category!!.asChannel()
+                val channels = category.channels.filter { it.type == ChannelType.GuildText }.toList()
+
+                try {
+                    channels.forEach {
+                        it.asChannelOf<TextChannel>().edit {
+                            name = it.name.removeSuffix("-🔒")
+                            addRoleOverwrite(guild!!.id) {
+                                allowed = Permissions(Permission.SendMessages, Permission.AddReactions)
+                            }
+                        }
+                        // TODO: 13.03.2022 Send notification in channel
+                    }
+                } catch (e: RequestException) {
+                    respond {
+                        content = "Something went wrong in unlock-cat command"
+                    }
+                }
+
+                respond { 
+                    content = "Unlocked **${channels.size} channels** in `${category.name.uppercase()} category`"
+                }
+
+                // TODO: 13.03.2022 Log action 
+            }
+        }
     }
 
     inner class ChannelLockArgs : Arguments() {
@@ -135,7 +210,35 @@ class LockingCommand : Extension() {
             description = "Whether a message should be sent in the channel, why the channel was locked"
             defaultValue = false
         }
+    }
 
+    inner class CategoryLockArgs : Arguments() {
+        val category by optionalChannel {
+            name = "category"
+            description = "The category whose channels are to be locked"
+            validate {
+                failIf("This is not a category") {
+                    value?.type != ChannelType.GuildCategory
+                }
+            }
+        }
+        val notify by defaultingBoolean {
+            name = "notify"
+            description = "Whether a message should be sent in the channel, why the channel was locked"
+            defaultValue = false
+        }
+    }
+
+    inner class CategoryUnlockArgs : Arguments() {
+        val category by optionalChannel {
+            name = "category"
+            description = "The category whose channels are to be unlocked"
+            validate {
+                failIf("This is not a category") {
+                    value?.type != ChannelType.GuildCategory
+                }
+            }
+        }
     }
 
 }
