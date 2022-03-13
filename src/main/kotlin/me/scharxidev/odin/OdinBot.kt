@@ -23,13 +23,13 @@ suspend fun main() {
         }
         extensions {
             add(::Config)
-            add(::Moderation)
             add(::ClearCommand)
             add(::MutingCommand)
             add(::SlowModeCommand)
             add(::NukeCommand)
             add(::PurgeCommand)
             add(::BanCommand)
+            add(::KickCommand)
             add(::GhostPingDetector)
         }
         presence {
