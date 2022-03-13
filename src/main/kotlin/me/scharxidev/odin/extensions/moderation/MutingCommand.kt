@@ -11,7 +11,6 @@ import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.time.TimestampType
 import com.kotlindiscord.kord.extensions.time.toDiscord
 import com.kotlindiscord.kord.extensions.types.respond
-import com.kotlindiscord.kord.extensions.utils.removeTimeout
 import com.kotlindiscord.kord.extensions.utils.timeoutUntil
 import dev.kord.common.entity.Permission
 import dev.kord.common.entity.Snowflake
