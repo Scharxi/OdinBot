@@ -3,6 +3,7 @@ package me.scharxidev.odin.extensions.moderation
 import com.kotlindiscord.kord.extensions.checks.hasPermission
 import com.kotlindiscord.kord.extensions.commands.Arguments
 import com.kotlindiscord.kord.extensions.commands.converters.impl.int
+import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
 import dev.kord.common.entity.Permission
@@ -13,10 +14,12 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
-import me.scharxidev.odin.extensions.Moderation
 import mu.KotlinLogging
 
-class ClearCommand : Moderation() {
+class ClearCommand : Extension() {
+    override val name: String
+        get() = "clearcommand"
+
     override suspend fun setup() {
         val logger = KotlinLogging.logger { }
         ephemeralSlashCommand(::ClearArgs) {

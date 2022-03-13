@@ -5,6 +5,7 @@ import com.kotlindiscord.kord.extensions.checks.hasPermission
 import com.kotlindiscord.kord.extensions.commands.Arguments
 import com.kotlindiscord.kord.extensions.commands.application.slash.ephemeralSubCommand
 import com.kotlindiscord.kord.extensions.commands.converters.impl.int
+import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
 import dev.kord.common.entity.Permission
@@ -15,10 +16,12 @@ import dev.kord.core.behavior.channel.edit
 import dev.kord.core.entity.channel.TextChannel
 import me.scharxidev.odin.database.DatabaseHelper
 import me.scharxidev.odin.database.DatabaseManager
-import me.scharxidev.odin.extensions.Moderation
 import me.scharxidev.odin.util.ResponseHelper
 
-class SlowModeCommand: Moderation() {
+class SlowModeCommand: Extension() {
+    override val name: String
+        get() = "slowmodecommand"
+
     override suspend fun setup() {
         ephemeralSlashCommand {
             name = "slowmo"

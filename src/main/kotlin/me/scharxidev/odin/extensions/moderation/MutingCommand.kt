@@ -6,6 +6,7 @@ import com.kotlindiscord.kord.extensions.commands.Arguments
 import com.kotlindiscord.kord.extensions.commands.converters.impl.coalescingDefaultingDuration
 import com.kotlindiscord.kord.extensions.commands.converters.impl.defaultingString
 import com.kotlindiscord.kord.extensions.commands.converters.impl.user
+import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.time.TimestampType
 import com.kotlindiscord.kord.extensions.time.toDiscord
@@ -24,11 +25,13 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import me.scharxidev.odin.database.DatabaseHelper
 import me.scharxidev.odin.database.DatabaseManager
-import me.scharxidev.odin.extensions.Moderation
 import me.scharxidev.odin.util.ResponseHelper
 import mu.KotlinLogging
 
-class MutingCommand : Moderation() {
+class MutingCommand : Extension() {
+    override val name: String
+        get() = "muting"
+
     override suspend fun setup() {
         val logger = KotlinLogging.logger { }
         ephemeralSlashCommand(::TempMuteArgs) {
@@ -163,7 +166,7 @@ class MutingCommand : Moderation() {
 
                 val actionLog = guild?.getChannel(Snowflake(actionLogId.orNull()!!)) as GuildMessageChannelBehavior
 
-                guild?.getMember(userArg.id)?.removeTimeout()
+                guild?.getMember(userArg.id)?.edit { timeoutUntil = null }
 
                 respond {
                     content = "Unmuted ${userArg.tag}"

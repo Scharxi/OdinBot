@@ -2,6 +2,7 @@ package me.scharxidev.odin.extensions.moderation
 
 import com.kotlindiscord.kord.extensions.DISCORD_GREEN
 import com.kotlindiscord.kord.extensions.checks.hasPermission
+import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
 import dev.kord.common.entity.Permission
@@ -13,10 +14,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import me.scharxidev.odin.database.DatabaseHelper
 import me.scharxidev.odin.database.DatabaseManager
-import me.scharxidev.odin.extensions.Moderation
 import me.scharxidev.odin.util.ResponseHelper
 
-class NukeCommand : Moderation() {
+class NukeCommand : Extension() {
+    override val name: String
+        get() = "nukecommand"
     override suspend fun setup() {
         ephemeralSlashCommand {
             name = "nuke"

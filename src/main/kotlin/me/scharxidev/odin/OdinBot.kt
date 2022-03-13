@@ -8,7 +8,6 @@ import dev.kord.gateway.PrivilegedIntent
 import me.scharxidev.odin.database.DatabaseManager
 import me.scharxidev.odin.events.GhostPingDetector
 import me.scharxidev.odin.extensions.Config
-import me.scharxidev.odin.extensions.Moderation
 import me.scharxidev.odin.extensions.moderation.*
 
 private val BOT_TOKEN = env("TOKEN")

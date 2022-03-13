@@ -6,6 +6,7 @@ import com.kotlindiscord.kord.extensions.commands.Arguments
 import com.kotlindiscord.kord.extensions.commands.converters.impl.defaultingInt
 import com.kotlindiscord.kord.extensions.commands.converters.impl.defaultingString
 import com.kotlindiscord.kord.extensions.commands.converters.impl.user
+import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
 import com.kotlindiscord.kord.extensions.utils.timeoutUntil
@@ -19,11 +20,13 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.Clock
 import me.scharxidev.odin.database.DatabaseHelper
 import me.scharxidev.odin.database.DatabaseManager
-import me.scharxidev.odin.extensions.Moderation
 import me.scharxidev.odin.util.ResponseHelper
 import mu.KotlinLogging
 
-class BanCommand : Moderation() {
+class BanCommand : Extension() {
+    override val name: String
+        get() = "banning"
+
     override suspend fun setup() {
         val logger = KotlinLogging.logger { }
 
