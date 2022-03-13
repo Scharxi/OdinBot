@@ -17,7 +17,6 @@ import me.scharxidev.odin.database.DatabaseHelper
 import me.scharxidev.odin.database.DatabaseManager
 import me.scharxidev.odin.extensions.Moderation
 import me.scharxidev.odin.util.ResponseHelper
-import mu.KotlinLogging
 
 class SlowModeCommand: Moderation() {
     override suspend fun setup() {
