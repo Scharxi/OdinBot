@@ -30,6 +30,7 @@ suspend fun main() {
             add(::BanCommand)
             add(::KickCommand)
             add(::LockingCommand)
+            add(::LockoutCommand)
             add(::GhostPingDetector)
         }
         presence {
