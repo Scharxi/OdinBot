@@ -133,7 +133,7 @@ class LockingCommand : Extension() {
                         }
                         // TODO: 13.03.2022 Notify channel
                     }
-                } catch(e: RequestException) {
+                } catch (e: RequestException) {
                     respond {
                         content = "Something went wrong in lock-cat command"
                     }
@@ -150,11 +150,11 @@ class LockingCommand : Extension() {
         ephemeralSlashCommand(::CategoryUnlockArgs) {
             name = "unlock-cat"
             description = "The category whose channels are to be unlocked"
-            
-            check{ hasPermission(Permission.ManageChannels)}
-            
-            action { 
-                val category: Category = 
+
+            check { hasPermission(Permission.ManageChannels) }
+
+            action {
+                val category: Category =
                     arguments.category?.asChannelOf() ?: channel.asChannelOf<TextChannel>().category!!.asChannel()
                 val channels = category.channels.filter { it.type == ChannelType.GuildText }.toList()
 
@@ -174,7 +174,7 @@ class LockingCommand : Extension() {
                     }
                 }
 
-                respond { 
+                respond {
                     content = "Unlocked **${channels.size} channels** in `${category.name.uppercase()} category`"
                 }
 
