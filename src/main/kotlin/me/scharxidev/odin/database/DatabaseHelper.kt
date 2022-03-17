@@ -18,4 +18,16 @@ object DatabaseHelper {
             }
         }
     }
+
+    suspend fun selectFromReportPreferences(guildId: Snowflake, column: Column<String>): Option<String> {
+        return newSuspendedTransaction {
+            try {
+                Some(DatabaseManager.ReportPreference.select {
+                    DatabaseManager.ReportPreference.guildId eq guildId.toString()
+                }.single()[column])
+            }catch (e: NoSuchElementException) {
+                None
+            }
+        }
+    }
 }

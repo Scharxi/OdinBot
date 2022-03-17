@@ -39,11 +39,20 @@ object DatabaseManager {
         val modActionLog = varchar("modActionLog", DEFAULT_VARCHAR_SIZE)
         val messagesLog = varchar("messagesLog", DEFAULT_VARCHAR_SIZE)
         val joinChannel = varchar("joinChannel", DEFAULT_VARCHAR_SIZE)
+
+        override val primaryKey: PrimaryKey = PrimaryKey(guildId)
+    }
+
+    object ReportPreference: Table("report-preferences") {
+        val guildId = varchar("guildId", DEFAULT_VARCHAR_SIZE)
+        val reportLogChannel = varchar("reportLog", DEFAULT_VARCHAR_SIZE)
+
+        override val primaryKey: PrimaryKey = PrimaryKey(guildId)
     }
 
     fun startDatabase() {
         transaction {
-            SchemaUtils.createMissingTablesAndColumns(Warn, Config)
+            SchemaUtils.createMissingTablesAndColumns(Warn, Config, ReportPreference)
         }
     }
 }
