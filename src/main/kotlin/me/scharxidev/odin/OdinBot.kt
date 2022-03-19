@@ -2,6 +2,7 @@ package me.scharxidev.odin
 
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.utils.env
+import com.kotlindiscord.kord.extensions.utils.scheduling.Scheduler
 import dev.kord.common.entity.PresenceStatus
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
@@ -35,6 +36,7 @@ suspend fun main() {
             add(::LockoutCommand)
             add(::ReportMessageCommand)
             add(::ReportPreferencesCommand)
+            add(::TempBanCommand)
             add(::GhostPingDetector)
         }
         presence {

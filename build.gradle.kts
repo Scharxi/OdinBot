@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.time)
 
     // Arrow
     implementation("io.arrow-kt:arrow-core:1.0.2-SNAPSHOT")

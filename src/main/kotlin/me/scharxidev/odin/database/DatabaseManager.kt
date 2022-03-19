@@ -6,7 +6,9 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.javatime.duration
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.security.DrbgParameters
 
 private const val DEFAULT_VARCHAR_SIZE: Int = 128
 
@@ -46,6 +48,15 @@ object DatabaseManager {
     object ReportPreference: Table("report-preferences") {
         val guildId = varchar("guildId", DEFAULT_VARCHAR_SIZE)
         val reportLogChannel = varchar("reportLog", DEFAULT_VARCHAR_SIZE)
+
+        override val primaryKey: PrimaryKey = PrimaryKey(guildId)
+    }
+
+    object TempBan : Table("temp-bans") {
+        val guildId = varchar("guildId", DEFAULT_VARCHAR_SIZE)
+        val userId = varchar("userId", DEFAULT_VARCHAR_SIZE)
+        val expiration = duration("expiration")
+        val active = bool("active").default(true)
 
         override val primaryKey: PrimaryKey = PrimaryKey(guildId)
     }

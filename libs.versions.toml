@@ -25,5 +25,6 @@ kx-ser = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
+exposed-time = {module = "org.jetbrains.exposed:exposed-java-time", version.ref = "exposed"}
 ktoml = {module = "com.akuleshov7:ktoml-core", version.ref = "ktoml"}
 ktomlf = {module = "com.akuleshov7:ktoml-file", version.ref = "ktoml"}
